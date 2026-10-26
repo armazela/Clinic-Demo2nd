@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="ka">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>რეცეფცია – კლინიკა</title>
+<style>
+:root{--bg:#f3f7f6;--card:#fff;--ink:#17302e;--mute:#64807c;--line:#dbe6e3;--brand:#0f766e;
+--bk:#e5e7eb;--bk-i:#374151;--ar:#bfdbfe;--ar-i:#1e3a8a;--rm:#fed7aa;--rm-i:#9a3412;--dn:#bbf7d0;--dn-i:#166534}
+*{box-sizing:border-box}
+body{margin:0;font-family:"Noto Sans Georgian","BPG Nino Mtavruli",system-ui,sans-serif;background:var(--bg);color:var(--ink)}
+.top{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:var(--brand);color:#fff;padding:10px 16px}
+.top b{font-size:18px;margin-right:auto}
+.top a,.top button{color:#fff;background:rgba(255,255,255,.15);border:0;border-radius:8px;padding:7px 12px;font:inherit;font-size:14px;text-decoration:none;cursor:pointer}
+.top .new{background:#fff;color:var(--brand);font-weight:600}
+button:focus-visible,select:focus-visible{outline:3px solid var(--brand);outline-offset:2px}
+main{display:grid;grid-template-columns:1fr 320px;gap:16px;padding:16px;max-width:1400px;margin:auto}
+section,aside{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px}
+h1,h2{margin:0 0 10px;font-size:18px}
+.legend{display:flex;gap:10px;flex-wrap:wrap;font-size:13px;color:var(--mute);margin-bottom:10px}
+.dot{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:4px}
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
+.col h3{margin:0 0 8px;font-size:15px}.col h3 small{display:block;color:var(--mute);font-weight:400;font-size:12px}
+.appt{border-radius:10px;padding:9px 10px;margin-bottom:8px;font-size:13px}
+.appt b{font-size:14px}.appt .t{font-weight:700}
+.appt.booked{background:var(--bk);color:var(--bk-i)}.appt.arrived{background:var(--ar);color:var(--ar-i)}
+.appt.in-room{background:var(--rm);color:var(--rm-i)}.appt.done{background:var(--dn);color:var(--dn-i)}
+.appt button{margin-top:6px;border:0;border-radius:7px;background:var(--brand);color:#fff;padding:6px 10px;font:inherit;font-size:13px;cursor:pointer}
+.empty{color:var(--mute);font-size:13px}
+.q{border:1px solid var(--line);border-radius:10px;padding:10px;margin-bottom:10px}
+.q p{margin:0 0 6px;font-weight:600;font-size:14px}
+.q ul{margin:0 0 8px;padding-left:18px;font-size:14px}
+.q button{width:100%;border:0;border-radius:8px;background:var(--rm-i);color:#fff;padding:9px;font:inherit;font-size:14px;cursor:pointer}
+.q button:disabled{background:#cbd5d1;cursor:not-allowed}
+dialog{border:0;border-radius:14px;padding:18px;width:min(420px,92vw)}
+dialog::backdrop{background:rgba(0,0,0,.4)}
+dialog label{display:block;font-size:13px;color:var(--mute);margin:10px 0 4px}
+dialog select{width:100%;padding:9px;border:1px solid var(--line);border-radius:8px;font:inherit}
+.row{display:flex;gap:8px;margin-top:16px}
+.row button{flex:1;padding:10px;border-radius:8px;border:0;font:inherit;cursor:pointer}
+.ok{background:var(--brand);color:#fff}.cx{background:var(--bk)}
+.toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,20px);background:#17302e;color:#fff;padding:12px 20px;border-radius:10px;opacity:0;pointer-events:none;transition:.25s;max-width:90vw}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+@media(max-width:850px){main{grid-template-columns:1fr;padding:10px}}
+</style>
+</head>
+<body>
+<header class="top">
+  <b>კლინიკა · რეცეფცია</b>
+  <button class="new" id="newBtn">+ ახალი ჩაწერა</button>
+  <a href="queue-tv.html" target="_blank">რიგის ეკრანი (TV)</a>
+  <button id="reset">Reset</button>
+</header>
+<main>
+  <section>
+    <h1>დღევანდელი განრიგი</h1>
+    <div class="legend">
+      <span><i class="dot" style="background:var(--bk)"></i>ჩაწერილი</span>
+      <span><i class="dot" style="background:var(--ar)"></i>მოვიდა</span>
+      <span><i class="dot" style="background:var(--rm)"></i>კაბინეტში</span>
+      <span><i class="dot" style="background:var(--dn)"></i>დასრულებული</span>
+    </div>
+    <div class="cols" id="cols"></div>
+  </section>
+  <aside>
+    <h2>რიგი</h2>
+    <div id="queue"></div>
+  </aside>
+</main>
+
+<dialog id="dlg">
+  <h2>ახალი ჩაწერა</h2>
+  <label for="fPat">პაციენტი</label><select id="fPat"></select>
+  <label for="fSrv">სერვისი</label><select id="fSrv"></select>
+  <label for="fDoc">ექიმი</label><select id="fDoc"></select>
+  <label for="fSlot">თავისუფალი დრო</label><select id="fSlot"></select>
+  <div class="row"><button class="cx" id="cancel">გაუქმება</button><button class="ok" id="save">ჩაწერა</button></div>
+</dialog>
+<div class="toast" id="toast" role="status"></div>
+<script src="reception.js"></script>
+</body>
+</html>
